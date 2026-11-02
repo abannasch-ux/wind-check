@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Wind Check</title>
+<meta name="description" content="Instant wind direction and speed for your location.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0e2417">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wind Check">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<style>
+  :root { color-scheme: dark; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: #0e2417;
+    color: #f2f5f0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100dvh;
+    padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
+    text-align: center;
+    user-select: none; -webkit-user-select: none;
+  }
+  #from-label { font-size: clamp(20px, 6vw, 28px); letter-spacing: .35em; text-transform: uppercase; color: #b9c9b4; text-indent: .35em; }
+  #compass-point { font-size: clamp(84px, 30vw, 150px); font-weight: 800; line-height: 1; margin-top: 2px; }
+  #compass-deg { font-size: clamp(20px, 6vw, 28px); color: #b9c9b4; margin-top: 4px; }
+  #dial { position: relative; width: min(46vw, 190px); height: min(46vw, 190px); margin: 26px 0 6px; }
+  #dial .ring {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 3px solid rgba(242,245,240,.25);
+  }
+  #dial .tick { position: absolute; left: 50%; top: 50%; font-size: 15px; font-weight: 700; color: #b9c9b4; transform-origin: 0 0; }
+  #arrow {
+    position: absolute; left: 50%; top: 50%; width: 0; height: 0;
+    transition: transform .8s ease;
+  }
+  #arrow .shaft {
+    position: absolute; left: -7px; top: -64px; width: 14px; height: 88px;
+    background: #ff7a1a; border-radius: 7px;
+  }
+  #arrow .head {
+    position: absolute; left: -22px; top: -92px; width: 0; height: 0;
+    border-left: 22px solid transparent; border-right: 22px solid transparent;
+    border-bottom: 34px solid #ff7a1a;
+  }
+  #arrow .tail {
+    position: absolute; left: -18px; top: 16px; width: 0; height: 0;
+    border-left: 18px solid transparent; border-right: 18px solid transparent;
+    border-top: 26px solid rgba(255,122,26,.55);
+  }
+  #arrow .dot {
+    position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; border-radius: 50%;
+    background: #f2f5f0;
+  }
+  #speed-row { display: flex; align-items: baseline; gap: 10px; margin-top: 10px; }
+  #speed { font-size: clamp(72px, 26vw, 120px); font-weight: 800; line-height: 1; }
+  #speed-unit { font-size: clamp(24px, 7vw, 34px); color: #b9c9b4; font-weight: 600; }
+  #gusts { font-size: clamp(19px, 5.5vw, 25px); color: #b9c9b4; margin-top: 8px; min-height: 1.3em; }
+  #gusts b { color: #ffb37a; font-weight: 700; }
+  #status { margin-top: 26px; font-size: 15px; color: #8fa388; min-height: 1.3em; padding: 0 10px; }
+  #refresh {
+    margin-top: 14px; background: rgba(242,245,240,.08); color: #f2f5f0;
+    border: 1px solid rgba(242,245,240,.25); border-radius: 999px;
+    font-size: 17px; font-weight: 600; padding: 12px 34px; cursor: pointer;
+  }
+  #refresh:active { background: rgba(242,245,240,.18); }
+</style>
+</head>
+<body>
+  <div id="from-label">Wind from</div>
+  <div id="compass-point">--</div>
+  <div id="compass-deg">&nbsp;</div>
+
+  <div id="dial" aria-hidden="true">
+    <div class="ring"></div>
+    <div id="arrow">
+      <div class="shaft"></div>
+      <div class="head"></div>
+      <div class="tail"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+
+  <div id="speed-row"><span id="speed">--</span><span id="speed-unit">mph</span></div>
+  <div id="gusts">&nbsp;</div>
+
+  <div id="status">Getting your location…</div>
+  <button id="refresh" type="button">Refresh</button>
+
+<script src="app.js"></script>
+</body>
+</html>
