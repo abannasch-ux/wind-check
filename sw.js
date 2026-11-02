@@ -1,7 +1,7 @@
 // Wind Check service worker — caches the app shell so it opens offline.
 // Weather data is always fetched fresh from the network (never cached).
 
-var CACHE = 'wind-check-v1';
+var CACHE = 'wind-check-v2';
 var SHELL = [
   './',
   './index.html',

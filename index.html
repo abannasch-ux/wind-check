@@ -30,46 +30,31 @@
   #from-label { font-size: clamp(20px, 6vw, 28px); letter-spacing: .35em; text-transform: uppercase; color: #b9c9b4; text-indent: .35em; }
   #compass-point { font-size: clamp(84px, 30vw, 150px); font-weight: 800; line-height: 1; margin-top: 2px; }
   #compass-deg { font-size: clamp(20px, 6vw, 28px); color: #b9c9b4; margin-top: 4px; }
-  #dial { position: relative; width: min(46vw, 190px); height: min(46vw, 190px); margin: 26px 0 6px; }
-  #dial .ring {
-    position: absolute; inset: 0; border-radius: 50%;
-    border: 3px solid rgba(242,245,240,.25);
+  #dial-wrap { position: relative; width: min(62vw, 250px); height: min(62vw, 250px); margin: 22px 0 4px; }
+  #lubber {
+    position: absolute; left: 50%; top: -14px; transform: translateX(-50%);
+    width: 0; height: 0; z-index: 2;
+    border-left: 11px solid transparent; border-right: 11px solid transparent;
+    border-top: 16px solid #f2f5f0;
   }
-  #dial .tick { position: absolute; left: 50%; top: 50%; font-size: 15px; font-weight: 700; color: #b9c9b4; transform-origin: 0 0; }
-  #arrow {
-    position: absolute; left: 50%; top: 50%; width: 0; height: 0;
-    transition: transform .8s ease;
-  }
-  #arrow .shaft {
-    position: absolute; left: -7px; top: -64px; width: 14px; height: 88px;
-    background: #ff7a1a; border-radius: 7px;
-  }
-  #arrow .head {
-    position: absolute; left: -22px; top: -92px; width: 0; height: 0;
-    border-left: 22px solid transparent; border-right: 22px solid transparent;
-    border-bottom: 34px solid #ff7a1a;
-  }
-  #arrow .tail {
-    position: absolute; left: -18px; top: 16px; width: 0; height: 0;
-    border-left: 18px solid transparent; border-right: 18px solid transparent;
-    border-top: 26px solid rgba(255,122,26,.55);
-  }
-  #arrow .dot {
-    position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; border-radius: 50%;
-    background: #f2f5f0;
-  }
-  #speed-row { display: flex; align-items: baseline; gap: 10px; margin-top: 10px; }
+  #rotor { position: absolute; inset: 0; will-change: transform; }
+  #dial-svg { width: 100%; height: 100%; display: block; }
+  #facing { font-size: clamp(17px, 5vw, 22px); color: #f2f5f0; margin-top: 10px; min-height: 1.3em; font-weight: 600; }
+  #facing span { color: #b9c9b4; font-weight: 400; }
+  #speed-row { display: flex; align-items: baseline; gap: 10px; margin-top: 8px; }
   #speed { font-size: clamp(72px, 26vw, 120px); font-weight: 800; line-height: 1; }
   #speed-unit { font-size: clamp(24px, 7vw, 34px); color: #b9c9b4; font-weight: 600; }
   #gusts { font-size: clamp(19px, 5.5vw, 25px); color: #b9c9b4; margin-top: 8px; min-height: 1.3em; }
   #gusts b { color: #ffb37a; font-weight: 700; }
-  #status { margin-top: 26px; font-size: 15px; color: #8fa388; min-height: 1.3em; padding: 0 10px; }
-  #refresh {
-    margin-top: 14px; background: rgba(242,245,240,.08); color: #f2f5f0;
+  #status { margin-top: 22px; font-size: 15px; color: #8fa388; min-height: 1.3em; padding: 0 10px; }
+  .btnrow { display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; justify-content: center; }
+  .btn {
+    background: rgba(242,245,240,.08); color: #f2f5f0;
     border: 1px solid rgba(242,245,240,.25); border-radius: 999px;
-    font-size: 17px; font-weight: 600; padding: 12px 34px; cursor: pointer;
+    font-size: 17px; font-weight: 600; padding: 12px 30px; cursor: pointer;
   }
-  #refresh:active { background: rgba(242,245,240,.18); }
+  .btn:active { background: rgba(242,245,240,.18); }
+  #compass-btn { display: none; border-color: #ff7a1a; color: #ffb37a; }
 </style>
 </head>
 <body>
@@ -77,21 +62,35 @@
   <div id="compass-point">--</div>
   <div id="compass-deg">&nbsp;</div>
 
-  <div id="dial" aria-hidden="true">
-    <div class="ring"></div>
-    <div id="arrow">
-      <div class="shaft"></div>
-      <div class="head"></div>
-      <div class="tail"></div>
-      <div class="dot"></div>
+  <div id="dial-wrap">
+    <div id="lubber"></div>
+    <div id="rotor">
+      <svg id="dial-svg" viewBox="0 0 200 200" aria-hidden="true">
+        <circle cx="100" cy="100" r="96" fill="none" stroke="rgba(242,245,240,.25)" stroke-width="2"/>
+        <g id="ticks"></g>
+        <text x="100" y="30" text-anchor="middle" font-size="17" font-weight="700" fill="#f2f5f0">N</text>
+        <text x="176" y="107" text-anchor="middle" font-size="15" font-weight="700" fill="#b9c9b4">E</text>
+        <text x="100" y="186" text-anchor="middle" font-size="15" font-weight="700" fill="#b9c9b4">S</text>
+        <text x="24" y="107" text-anchor="middle" font-size="15" font-weight="700" fill="#b9c9b4">W</text>
+        <g id="wind-arrow">
+          <rect x="96.5" y="40" width="7" height="86" rx="3.5" fill="#ff7a1a"/>
+          <polygon points="100,8 79,42 121,42" fill="#ff7a1a"/>
+          <polygon points="100,138 83,114 117,114" fill="rgba(255,122,26,.55)"/>
+          <circle cx="100" cy="100" r="6.5" fill="#f2f5f0"/>
+        </g>
+      </svg>
     </div>
   </div>
+  <div id="facing">&nbsp;</div>
 
   <div id="speed-row"><span id="speed">--</span><span id="speed-unit">mph</span></div>
   <div id="gusts">&nbsp;</div>
 
   <div id="status">Getting your location…</div>
-  <button id="refresh" type="button">Refresh</button>
+  <div class="btnrow">
+    <button id="compass-btn" class="btn" type="button">Enable Live Compass</button>
+    <button id="refresh" class="btn" type="button">Refresh</button>
+  </div>
 
 <script src="app.js"></script>
 </body>
