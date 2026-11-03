@@ -68,6 +68,15 @@ function fetchWind(lat, lon, placeLabel) {
       // Arrow points where the wind is blowing TO (from-direction + 180).
       els.arrow.setAttribute('transform', 'rotate(' + ((dir + 180) % 360) + ' 100 100)');
       els.speed.textContent = spd;
+      // Flow animation speed follows the actual wind: calm = paused,
+      // stronger wind = faster stream. ~0.45s at 35+ mph, ~2.4s when light.
+      var root = document.documentElement.style;
+      if (spd <= 1) {
+        root.setProperty('--flow-play', 'paused');
+      } else {
+        root.setProperty('--flow-play', 'running');
+        root.setProperty('--flow-dur', Math.max(0.45, Math.min(2.4, 2.4 - spd * 0.055)).toFixed(2) + 's');
+      }
       els.gusts.innerHTML = gst > spd ? 'Gusts to <b>' + gst + ' mph</b>' : '&nbsp;';
       var t = new Date(c.time);
       var when = t.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
