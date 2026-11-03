@@ -1,7 +1,7 @@
 // Wind Check service worker — caches the app shell so it opens offline.
 // Weather data is always fetched fresh from the network (never cached).
 
-var CACHE = 'wind-check-v3.3';
+var CACHE = 'wind-check-v3.4';
 var SHELL = [
   './',
   './index.html',
@@ -31,28 +31,20 @@ self.addEventListener('activate', function (event) {
 
 self.addEventListener('fetch', function (event) {
   var url = new URL(event.request.url);
-  if (url.hostname.indexOf('open-meteo') !== -1) {
-    return; // live weather: straight to network, no caching
-  }
-  if (url.origin !== self.location.origin) return;
-  // App code (page + scripts): network-first so updates show up on the
-  // next open instead of lagging a launch behind; cache is the offline fallback.
-  if (event.request.mode === 'navigate' || /\.(html|js)$/.test(url.pathname)) {
-    event.respondWith(
-      fetch(event.request).then(function (res) {
-        var copy = res.clone();
-        caches.open(CACHE).then(function (c) { c.put(event.request, copy); });
-        return res;
-      }).catch(function () {
-        return caches.match(event.request, { ignoreSearch: true });
-      })
-    );
-    return;
-  }
-  // Icons / manifest: cache-first.
+  if (url.origin !== self.location.origin) return; // APIs + map tiles: network only, never cached
+  // Default PWA behavior (Andy's choice, 2026-11-03): open instantly from
+  // the on-phone copy, check for a new version in the background, and use
+  // the downloaded update on the next open.
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true }).then(function (hit) {
-      return hit || fetch(event.request);
+      var refresh = fetch(event.request).then(function (res) {
+        if (res && res.ok) {
+          var copy = res.clone();
+          caches.open(CACHE).then(function (c) { c.put(event.request, copy); });
+        }
+        return res;
+      }).catch(function () { return null; });
+      return hit || refresh;
     })
   );
 });
