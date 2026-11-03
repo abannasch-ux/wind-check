@@ -145,9 +145,15 @@ function startCompass() {
 
 if (typeof DeviceOrientationEvent !== 'undefined' &&
     typeof DeviceOrientationEvent.requestPermission === 'function') {
-  // iOS: permission must be requested from a tap.
+  // iOS forgets this permission every time the app closes (Apple's rule —
+  // no web app can make it permanent). So ask on the FIRST tap anywhere on
+  // the screen instead of making Andy hunt for the button; the button
+  // stays as a fallback.
   els.compassBtn.style.display = 'inline-block';
-  els.compassBtn.addEventListener('click', function () {
+  var compassAsked = false;
+  var askCompass = function () {
+    if (compassAsked) return;
+    compassAsked = true;
     DeviceOrientationEvent.requestPermission().then(function (result) {
       if (result === 'granted') {
         startCompass();
@@ -160,7 +166,9 @@ if (typeof DeviceOrientationEvent !== 'undefined' &&
       els.status.textContent = 'Compass not available on this device.';
       els.compassBtn.style.display = 'none';
     });
-  });
+  };
+  els.compassBtn.addEventListener('click', askCompass);
+  document.addEventListener('pointerdown', askCompass);
 } else if (typeof DeviceOrientationEvent !== 'undefined') {
   // Android / desktop browsers with a sensor: no permission step.
   startCompass();
