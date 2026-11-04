@@ -141,41 +141,47 @@ function onOrient(event) {
 function startCompass() {
   window.addEventListener('deviceorientationabsolute', onOrient, true);
   window.addEventListener('deviceorientation', onOrient, true);
+  // If permission is fine but no heading ever arrives, say so instead of
+  // leaving a silently dead dial.
+  setTimeout(function () {
+    if (!compassOn) {
+      els.facing.innerHTML = '<span>No compass heading yet — if the dial stays still, wave the phone in a slow figure-8</span>';
+    }
+  }, 3000);
 }
 
 if (typeof DeviceOrientationEvent !== 'undefined' &&
     typeof DeviceOrientationEvent.requestPermission === 'function') {
-  // iOS forgets this permission every time the app closes (Apple's rule —
-  // no web app can make it permanent). So ask on the FIRST tap anywhere on
-  // the screen instead of making Andy hunt for the button; the button
-  // stays as a fallback.
+  // iOS: ask only from a deliberate tap on the button — the v2 flow, which
+  // worked. (v3.3 asked on the first tap ANYWHERE: one stray tap consumed
+  // the single request, a denial or error then hid the button with no way
+  // to retry, and the weather refresh overwrote the explanation in the
+  // status line within seconds. All three failure modes are removed here:
+  // button only, button stays on failure so he can retry, and compass
+  // messages go on the facing line, which the weather code never touches.)
   els.compassBtn.style.display = 'inline-block';
-  var compassAsked = false;
+  els.facing.innerHTML = '<span>Tap Enable Live Compass to make the dial follow your phone</span>';
+  var compassAsking = false;
   var askCompass = function () {
-    if (compassAsked) return;
-    compassAsked = true;
+    if (compassAsking || compassOn) return;
+    compassAsking = true;
     DeviceOrientationEvent.requestPermission().then(function (result) {
+      compassAsking = false;
       if (result === 'granted') {
+        els.compassBtn.style.display = 'none';
         startCompass();
-        els.compassBtn.style.display = 'none';
       } else {
-        els.status.textContent = 'Compass permission denied — dial stays pointing north.';
-        els.compassBtn.style.display = 'none';
+        els.facing.innerHTML = '<span>Compass permission was not given — tap Enable Live Compass to try again</span>';
       }
     }).catch(function () {
-      els.status.textContent = 'Compass not available on this device.';
-      els.compassBtn.style.display = 'none';
+      compassAsking = false;
+      els.facing.innerHTML = '<span>Compass did not start — tap Enable Live Compass to try again</span>';
     });
   };
   els.compassBtn.addEventListener('click', askCompass);
-  document.addEventListener('pointerdown', askCompass);
 } else if (typeof DeviceOrientationEvent !== 'undefined') {
   // Android / desktop browsers with a sensor: no permission step.
   startCompass();
-  // If no sensor data arrives shortly, hide the facing line (stays north-up).
-  setTimeout(function () {
-    if (!compassOn) els.facing.innerHTML = '<span>Live compass not available here — dial points north</span>';
-  }, 3000);
 }
 
 /* ---------------- Wiring ---------------- */
